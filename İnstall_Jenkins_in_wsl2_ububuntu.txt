@@ -1,0 +1,29 @@
+sudo -s
+apt-get update
+apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+apt-get update
+
+sudo apt install openjdk-8-jdk           # choose this or next line
+sudo apt install openjdk-11-jre-headless # or Install Java 11 JDK/JRE
+sudo apt install Jenkins
+
+-output;You will get an error like below:
+E: Unable to locate package Jenkins
+
+-To solve this, run the below script:
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add
+sudo bash -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+sudo apt update
+sudo apt-get install jenkins
+-With this, ~ 68MB Jenkins package will be downloaded, it will take a while depending on the internet speeds.
+Update Firewall to enable Jenkins service
+>sudo ufw enable
+>sudo ufw allow 8080 # whatever port number you like
+-Check the status of your port:
+>sudo ufw status
+-Run Jenkins server
+>sudo service jenkins start
+-Install Jenkins from a browser
+>http://localhost:8080/
+
+references: "https://dev.to/davidkou/install-jenkins-in-windows-subsystem-for-linux-wsl2-209"

@@ -1,0 +1,148 @@
+You can't (*) run Docker inside Docker containers or images. You can't (*) start background services inside a Dockerfile. As you say, commands like systemctl and service don't (*) work inside Docker anywhere. And in any case you can't use any host-system resources, including the host's Docker socket, from anywhere in a Dockerfile.
+
+You need to redesign this Dockerfile so that it only installs the software and makes no attempt to start it. Ideally a container would start only a single server, and would run it in the foreground as its CMD; otherwise you might depend on things like supervisord to have multiple servers if you must. If your application heavily relies on being able to start things in Docker, you might find it much easier to install in a virtual machine.
+
+(*) Technically there are ways to do all of these things, but they're all tricky and complicated and have implications (up to potentially giving your container unrestricted root access over the host, and your container startup actively reconfiguring some low-level host details).
+
+
+Wednesday, August 18, 2021
+ 
+styvane
+answered 5 Months ago
+styvane
+85
+FYI the correct Install Doc for v0.19.0 of Composer is here
+
+It looks like you are using sudo for some of the commands which may well be causing the problems. You should not need to use root or sudo. There is additional information in the the knowledge wiki about installing.
+
+
+Wednesday, August 11, 2021
+ 
+user435216
+answered 5 Months ago
+user435216
+37
+see these answers and guidelines (on what to store etc) on these Stack Overflow resources: is there any size limit for pdf in hyperledger fabric? and also this -> what is the best way of image storage on hyperledger composer? - in the comment section it has a link to a Github resource for alternatives such as IPFS
+
+
+Saturday, August 21, 2021
+ 
+som-snytt
+answered 5 Months ago
+som-snytt
+70
+You want to set DOCKER_HOST to tcp://docker:2375. It's a "service", i.e. running in a separate container, by default named after the image name, rather than localhost.
+
+Here's a .gitlab-ci.yml snippet that should work:
+
+# Build and push the Docker image off of merges to master; based off
+# of Gitlab CI support in https://pythonspeed.com/products/pythoncontainer/
+docker-build:
+  stage: build
+
+  image:
+    # An alpine-based image with the `docker` CLI installed.
+    name: docker:stable
+
+  # This will run a Docker daemon in a container (Docker-In-Docker), which will
+  # be available at thedockerhost:2375. If you make e.g. port 5000 public in Docker
+  # (`docker run -p 5000:5000 yourimage`) it will be exposed at thedockerhost:5000.
+  services:
+   - name: docker:dind
+     alias: thedockerhost
+
+  variables:
+    # Tell docker CLI how to talk to Docker daemon; see
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-docker-in-docker-executor
+    DOCKER_HOST: tcp://thedockerhost:2375/
+    # Use the overlayfs driver for improved performance:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+
+  script:
+    # Download bash:
+    - apk add --no-cache bash python3
+    # GitLab has a built-in Docker image registry, whose parameters are set automatically.
+    # See https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-the-gitlab-contai
+    #
+    # CHANGEME: You can use some other Docker registry though by changing the
+    # login and image name.
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker build -t "$CI_REGISTRY_IMAGE" .
+    - docker push "$CI_REGISTRY_IMAGE"
+
+  # Only build off of master branch:
+  only:
+    - master
+
+Monday, October 11, 2021
+ 
+dzm
+answered 3 Months ago
+dzm
+67
+It seems like you wont be able to use docker in Windows 10 family, since docker Desktop requires specific Windows version, as said in official documentation.
+
+System Requirements
+
+Windows 10 64-bit: Pro, Enterprise, or Education (Build 15063 or later).
+
+What you can try is to run linux-based virtual machine on you Windows host, and run docker inside of it. But even if you succeeded, you will lose all advantages of the docker in resources consumption.
+
+
+Sunday, November 14, 2021
+ 
+Xavi
+answered 2 Months ago
+Xavi
+Only authorized users can answer the question. Please sign in first, or register a free account.
+Not the answer you're looking for? Browse other questions tagged : docker dockerfile hyperledger-fabric hyperledger hyperledger-composer  
+Share
+      
+Related Answers
+1980
+Cannot connect to the Docker daemon on macOS
+432
+Cannot connect to the Docker daemon. Is the docker daemon running on this host?
+584
+Docker - Rails app cannot connect to linked Postgres container (doesn't seem to be running)
+1423
+docker: error during connect: In the default daemon configuration on Windows, the docker client must be run with...
+312
+Running Docker inside Docker container: Cannot connect to the Docker daemon
+21
+Dockerfile or Registry? Which is the preferred strategy for distribution?
+63
+Docker: Using COPY when the Dockerfile is located in a subdirectory
+60
+Docker-swarm >> Cannot connect to the docker engine endpoint
+698
+Cannot connect to the Docker daemon at tcp://localhost:2375/. Is the docker daemon running. On GitLab
+150
+docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running? Linux...
+
+Top Answers Related To
+docker,dockerfile,hyperledger-fabric,hyperledger,hyperledger-composer
+48
+Hyperledger fabric client credential store using CouchDB
+30
+IBM Blockchain - Simple Application
+67
+No version of composer-cli has been detected
+94
+Hyperledger Fabric altering fabcar example
+132
+How to store large file in Hyperledger Fabric using Hyperledger Composer
+111
+hyperledger-composer v1.1:unable to instantiate chaincode
+39
+Using two business cards in the same composer rest server configuration
+82
+Hyperledger composer network install
+33
+Hyperledger Fabic 2.2.0 Error handling success response. Value did not match schema
+12
+Fabric composer on Windows?
+
+Copyrights Code Redirect 2021 · Privacy · About Us · Terms of Use · Contact us ·
+https://coderedirect.com/questions/407402/cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-the-dockehttps://coderedirect.com/questions/407402/cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-the-docke
